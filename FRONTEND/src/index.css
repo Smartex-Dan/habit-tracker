@@ -5,10 +5,10 @@
   --font-headline: "Fraunces", serif;
   --font-body: "Sora", sans-serif;
 
-  /* Color tokens — from the fontpair.co brand kit you picked */
-  --color-background: #F4F1E8;
-  --color-text: #2D3A1F;
-  --color-primary: #2D3A1F;
-  --color-accent: #B8A678;
-  --color-surface: #E8E2D0;
+  /* Color tokens — updated palette */
+    --color-background: #E7F0FA;
+    --color-text: #203A5E;
+    --color-primary: #007AFF;
+    --color-accent: #2E5E99;
+    --color-surface: #0D2440;
 }

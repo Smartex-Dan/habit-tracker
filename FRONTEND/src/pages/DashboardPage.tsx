@@ -1,56 +1,89 @@
+import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useHabits } from "../hooks/useHabits";
+import { Navbar } from "../components/Navbar";
+import { HabitCard } from "../components/HabitCard";
+import { CreateHabitForm } from "../components/CreateHabitForm";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function DashboardPage() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { data: habits, isLoading, error } = useHabits();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const firstName = user?.email?.split("@")[0];
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold">Your Habits</h1>
-          <p className="text-neutral-500 text-sm">{user?.email}</p>
-        </div>
-        <button
-          onClick={() => signOut()}
-          className="text-sm text-neutral-500 hover:text-neutral-300"
-        >
-          Log out
-        </button>
-      </div>
+    <div className="min-h-screen" style={{ background: "var(--color-background)" }}>
+      <Navbar />
 
-      {isLoading && <p className="text-neutral-500">Loading habits...</p>}
-
-      {error && (
-        <p className="text-red-400 bg-red-950/40 border border-red-900 rounded-md px-3 py-2">
-          {(error as Error).message}
-        </p>
-      )}
-
-      {habits && habits.length === 0 && (
-        <p className="text-neutral-500">
-          No habits yet — this confirms the full chain works: React → Supabase
-          Auth → Django → Supabase Postgres (RLS). Next step is building the
-          "create habit" form.
-        </p>
-      )}
-
-      {habits && habits.length > 0 && (
-        <ul className="space-y-2">
-          {habits.map((h) => (
-            <li
-              key={h.id}
-              className="rounded-md border border-neutral-800 px-4 py-3 flex items-center justify-between"
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1
+              className="text-2xl font-semibold"
+              style={{ fontFamily: "var(--font-headline)", color: "var(--color-text)" }}
             >
-              <span>{h.title}</span>
-              <span className="text-sm text-neutral-500">
-                🔥 {h.current_streak}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+              Welcome back{firstName ? `, ${firstName}` : ""}
+            </h1>
+            <p className="text-sm opacity-60" style={{ color: "var(--color-text)" }}>
+              {habits?.length ?? 0} habit{habits?.length === 1 ? "" : "s"} tracked
+            </p>
+          </div>
+
+          {!showCreateForm && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="rounded-md px-4 py-2 text-sm font-medium transition hover:brightness-110 active:brightness-95"
+              style={{ background: "var(--color-primary)", color: "var(--color-background)" }}
+            >
+              + Add Habit
+            </button>
+          )}
+        </div>
+
+        {showCreateForm && (
+          <div className="mb-6">
+            <CreateHabitForm onDone={() => setShowCreateForm(false)} />
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size={48} className="text-[var(--color-primary)]" />
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">
+            {(error as Error).message}
+          </p>
+        )}
+
+        {habits && habits.length === 0 && !showCreateForm && (
+          <div
+            className="text-center rounded-lg border border-dashed py-16"
+            style={{ borderColor: "var(--color-surface)", color: "var(--color-text)" }}
+          >
+            <p className="opacity-70 mb-4">You haven't added any habits yet.</p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="rounded-md px-4 py-2 text-sm font-medium transition hover:brightness-110 active:brightness-95"
+              style={{ background: "var(--color-primary)", color: "var(--color-background)" }}
+            >
+              Add your first habit
+            </button>
+          </div>
+        )}
+
+        {habits && habits.length > 0 && (
+          <div className="space-y-3">
+            {habits.map((h) => (
+              <HabitCard key={h.id} habit={h} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

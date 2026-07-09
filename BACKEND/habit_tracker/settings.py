@@ -45,8 +45,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'profiles',
     'habits',
+    'goals',
 ]
-
+    
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
