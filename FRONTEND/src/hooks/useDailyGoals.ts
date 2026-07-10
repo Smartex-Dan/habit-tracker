@@ -21,10 +21,23 @@ export function useCreateDailyGoal() {
 
 export function useToggleDailyGoal() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ goalId, completed }: { goalId: string; completed: boolean }) =>
-      completed ? api.dailyGoals.complete(goalId) : api.dailyGoals.uncomplete(goalId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: DAILY_GOALS_KEY }),
+    mutationFn: async ({
+      goalId,
+      completed,
+    }: {
+      goalId: string;
+      completed: boolean;
+    }) => {
+      if (completed) {
+        await api.dailyGoals.uncomplete(goalId);
+      } else {
+        await api.dailyGoals.complete(goalId);
+      }
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: DAILY_GOALS_KEY }),
   });
 }
 
