@@ -6,9 +6,20 @@
   --font-body: "Sora", sans-serif;
 
   /* Color tokens — updated palette */
-    --color-background: #E7F0FA;
-    --color-text: #203A5E;
-    --color-primary: #007AFF;
-    --color-accent: #2E5E99;
-    --color-surface: #0D2440;
+    
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+
+  --color-primary: #2563EB;
+  --color-accent: #14B8A6;
+
+  --color-text: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  --color-border: #334155;
+
 }
