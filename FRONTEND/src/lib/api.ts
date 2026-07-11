@@ -1,4 +1,6 @@
 import { supabase } from "./supabase";
+import type { ConsistencyResult } from "../types/consistency";
+
 import type {
   Habit,
   HabitCreateInput,
@@ -133,4 +135,8 @@ export const api = {
     delete: (goalId: string) =>
       request<void>(`/long-term-goals/${goalId}`, { method: "DELETE" }),
   },
+  consistencyScore: {
+    get: () => request<ConsistencyResult>("/consistency-score"),
+  },
 };
+

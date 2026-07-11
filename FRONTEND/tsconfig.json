@@ -6,6 +6,7 @@
   ],
   "compilerOptions": {
     "composite": true,
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,

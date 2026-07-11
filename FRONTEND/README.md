@@ -49,25 +49,4 @@ React (this project) --auth--> Supabase Auth (JWT)
    ```
    Opens at `http://localhost:5173`.
 
-## What's built so far
-
-- [x] Project scaffold (Vite + TS + Tailwind v4)
-- [x] Typed API client + Supabase auth client
-- [x] Login / signup page
-- [x] Protected routing (redirects to `/login` if not authenticated)
-- [x] Dashboard page - lists habits, shows current streak, confirms the
-      full chain works end-to-end (React -> Supabase Auth -> Django -> Supabase
-      Postgres RLS)
-
-## What's next
-
-- [ ] "Create habit" form on the dashboard
-- [ ] Habit detail page with check-in button
-- [ ] Custom SVG heatmap component (GitHub-style contribution grid)
-- [ ] Empty states, loading skeletons, polish pass
-
-## A note on CORS
-
-If you see CORS errors in the browser console, check the Django backend's
-`.env` - `CORS_ALLOWED_ORIGINS` needs to include whatever port Vite is
-actually running on (default `http://localhost:5173`).
+# Tsk

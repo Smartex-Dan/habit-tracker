@@ -5,6 +5,7 @@ from .views import (
     HabitHistoryView,
     CheckInCreateView,
     CheckInDeleteView,
+    ConsistencyScoreView,
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path("habits/<uuid:habit_id>/history", HabitHistoryView.as_view(), name="habit-history"),
     path("check-ins", CheckInCreateView.as_view(), name="check-in-create"),
     path("check-ins/<uuid:check_in_id>", CheckInDeleteView.as_view(), name="check-in-delete"),
+    path("consistency-score", ConsistencyScoreView.as_view(), name="consistency-score"),
 ]

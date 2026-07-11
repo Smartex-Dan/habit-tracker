@@ -11,9 +11,13 @@ Every view here:
 
 from datetime import datetime, date as date_cls
 
+from .consistency import calculate_consistency_score
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .services import calculate_streaks
+from .supabase_client import get_supabase_client_for_request
+
 
 from .serializers import (
     HabitCreateSerializer,
@@ -205,3 +209,79 @@ class CheckInDeleteView(APIView):
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ConsistencyScoreView(APIView):
+    """
+    GET /api/consistency-score -> composite 0-100 score for the current user
+
+    Fetches all habits + this month's check-ins in two queries (same
+    no-N+1 pattern as HabitListCreateView), computes streaks per habit,
+    then hands off to calculate_consistency_score for the scoring math.
+    """
+
+    def get(self, request):
+        supabase = get_supabase_client_for_request(request)
+
+        habits_res = supabase.table("habits").select("id, created_at").execute()
+        habits_raw = habits_res.data or []
+
+        habits = [
+            {
+                "id": h["id"],
+                "created_at": datetime.strptime(
+                    h["created_at"][:10], "%Y-%m-%d"
+                ).date(),
+            }
+            for h in habits_raw
+        ]
+
+        if not habits:
+            return Response(
+                {
+                    "score": 0,
+                    "label": "Just Getting Started",
+                    "completion_rate": 0,
+                    "eligible_habit_count": 0,
+                    "summary": "Add your first habit to start building your score.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        today = date_cls.today()
+        month_start = today.replace(day=1).isoformat()
+        habit_ids = [h["id"] for h in habits]
+
+        check_ins_res = (
+            supabase.table("check_ins")
+            .select("habit_id, completed_at")
+            .in_("habit_id", habit_ids)
+            .gte("completed_at", month_start)
+            .execute()
+        )
+
+        check_ins_by_habit: dict[str, list[date_cls]] = {hid: [] for hid in habit_ids}
+        for row in check_ins_res.data or []:
+            d = datetime.strptime(row["completed_at"], "%Y-%m-%d").date()
+            check_ins_by_habit.setdefault(row["habit_id"], []).append(d)
+
+        # Streaks need full history, not just this month's check-ins —
+        # reuse the same all-time query pattern as HabitListCreateView.
+        all_check_ins_res = (
+            supabase.table("check_ins")
+            .select("habit_id, completed_at")
+            .in_("habit_id", habit_ids)
+            .execute()
+        )
+        all_dates_by_habit: dict[str, list[date_cls]] = {hid: [] for hid in habit_ids}
+        for row in all_check_ins_res.data or []:
+            d = datetime.strptime(row["completed_at"], "%Y-%m-%d").date()
+            all_dates_by_habit.setdefault(row["habit_id"], []).append(d)
+
+        for h in habits:
+            streaks = calculate_streaks(all_dates_by_habit.get(h["id"], []))
+            h["current_streak"] = streaks["current_streak"]
+            h["longest_streak"] = streaks["longest_streak"]
+
+        result = calculate_consistency_score(habits, check_ins_by_habit, today)
+
+        return Response(result, status=status.HTTP_200_OK)

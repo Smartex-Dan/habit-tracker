@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useHabits } from "../hooks/useHabits";
+import { useConsistencyScore } from "../hooks/useConsistencyScore";
 import { Navbar } from "../components/Navbar";
 import { HabitCard } from "../components/HabitCard";
 import { CreateHabitForm } from "../components/CreateHabitForm";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import ConsistencyScoreCard from "../components/ConsistencyScoreCard";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const { data: habits, isLoading, error } = useHabits();
+  const { data: score } = useConsistencyScore();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const firstName = user?.email?.split("@")[0];
@@ -41,6 +44,12 @@ export function DashboardPage() {
             </button>
           )}
         </div>
+
+        {score && (
+          <div className="mb-8">
+            <ConsistencyScoreCard result={score} />
+          </div>
+        )}
 
         {showCreateForm && (
           <div className="mb-6">
