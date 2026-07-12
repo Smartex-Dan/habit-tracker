@@ -23,3 +23,10 @@
   --color-border: #334155;
 
 }
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 64px;
+  }
+}
+ 

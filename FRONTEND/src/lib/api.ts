@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { ConsistencyResult } from "../types/consistency";
+import type { DashboardCharts } from "../types/dashboardCharts";
 
 import type {
   Habit,
@@ -137,6 +138,9 @@ export const api = {
   },
   consistencyScore: {
     get: () => request<ConsistencyResult>("/consistency-score"),
+  },
+  dashboardCharts: {
+    get: () => request<DashboardCharts>("/dashboard/charts"),
   },
 };
 

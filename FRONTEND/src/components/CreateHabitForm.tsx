@@ -18,13 +18,19 @@ export function CreateHabitForm({ onDone }: CreateHabitFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
+  const [reminderTime, setReminderTime] = useState(""); // "HH:MM" or ""
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
 
     createHabit(
-      { title: title.trim(), description: description.trim() || undefined, color },
+      {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        color,
+        reminder_time: reminderTime || undefined,
+      },
       { onSuccess: onDone }
     );
   }
@@ -67,6 +73,29 @@ export function CreateHabitForm({ onDone }: CreateHabitFormProps) {
             aria-label={`Choose color ${c}`}
           />
         ))}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <label className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+          Reminder (optional)
+        </label>
+        <input
+          type="time"
+          value={reminderTime}
+          onChange={(e) => setReminderTime(e.target.value)}
+          className="rounded-md px-3 py-1.5 border bg-transparent text-sm"
+          style={{ borderColor: "var(--color-surface)", color: "var(--color-text)" }}
+        />
+        {reminderTime && (
+          <button
+            type="button"
+            onClick={() => setReminderTime("")}
+            className="text-xs underline"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {error && (

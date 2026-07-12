@@ -8,14 +8,18 @@ export interface Habit {
   description: string | null;
   color: string; // hex code, e.g. "#8B6F4E"
   created_at: string; // ISO timestamp
+  reminder_time: string | null;
   current_streak: number;
   longest_streak: number;
+  checked_in_today: boolean;
+  today_check_in_id: string | null;
 }
 
 export interface HabitCreateInput {
   title: string;
   description?: string;
   color: string;
+  reminder_time?: string;
 }
 
 export interface CheckIn {

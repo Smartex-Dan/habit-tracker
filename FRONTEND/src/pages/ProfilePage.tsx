@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 import { useHabits } from "../hooks/useHabits";
 import { useFileUpload } from "../hooks/useFileUpload";
-import { ProgressBar } from "../components/ProgressBar";
 import { FileDropZone } from "../components/FileDropZone";
 import { Navbar } from "../components/Navbar";
 import { api } from "../lib/api";
@@ -89,20 +87,12 @@ export function ProfilePage() {
 
         {/* ---------- Avatar upload ---------- */}
         <Section title="Profile photo">
-          <AnimatePresence mode="wait">
-            {!uploading ? (
-              <motion.div key="dropzone" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
-                <FileDropZone
-                  onFileSelected={handleFileSelected}
-                  label={displayedImage ? "Drag & drop a new photo, or click to browse" : "Drag & drop your profile photo, or click to browse"}
-                />
-              </motion.div>
-            ) : (
-              <motion.div key="progress" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="py-6">
-                <ProgressBar percent={progress} label="Uploading avatar" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <FileDropZone
+            onFileSelected={handleFileSelected}
+            uploading={uploading}
+            progress={progress}
+            label={displayedImage ? "Drag & drop a new photo, or click to browse" : "Drag & drop your profile photo, or click to browse"}
+          />
           {uploadError && <ErrorText>{uploadError}</ErrorText>}
         </Section>
 

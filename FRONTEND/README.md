@@ -1,52 +1,154 @@
-# Habit Tracker — Frontend
+# Habit Tracker
 
-Vite + React + TypeScript + Tailwind v4. Talks to the Django backend for
-habit/check-in data, and to Supabase directly for auth.
+A modern full-stack habit tracking application built with React, TypeScript, Tailwind CSS, Supabase, and Django REST Framework. Habit Tracker helps users build consistency through daily habits, streak tracking, progress visualization, and insightful analytics.
+
+---
+
+## Features
+
+- Secure authentication with Supabase Auth
+- Custom display names and account settings
+- Daily habit tracking and check-ins
+- Current and longest streak tracking
+- Weekly progress charts
+- GitHub-style activity heatmap
+- Consistency score
+- Dashboard with real-time statistics
+- Responsive interface for desktop and mobile
+- Fast client-side caching with React Query
+
+---
+
+## Tech Stack
+
+### Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS v4
+- TanStack Query
+
+### Backend
+
+- Django
+- Django REST Framework
+- Supabase PostgreSQL
+- Supabase Authentication
+
+---
 
 ## Architecture
 
+```text
+React Frontend
+       │
+       ├── Authentication ─────► Supabase Auth
+       │
+       └── JWT Access Token ───► Django REST API
+                                     │
+                                     ▼
+                            Supabase PostgreSQL
 ```
-React (this project) --auth--> Supabase Auth (JWT)
-        |
-        +--JWT attached--> Django REST API --> Supabase Postgres (RLS)
+
+---
+
+## Project Structure
+
+```text
+src/
+├── components/
+├── hooks/
+├── lib/
+├── pages/
+├── types/
+└── utils/
 ```
 
-- `lib/supabase.ts` - Supabase client, used ONLY for sign up / log in / session.
-- `lib/api.ts` - typed fetch wrapper that talks to the Django backend,
-  automatically attaching the current Supabase session's access token as
-  `Authorization: Bearer <token>` on every request.
-- `hooks/useAuth.ts` - wraps Supabase session state (login/signup/logout).
-- `hooks/useHabits.ts`, `hooks/useHabitHistory.ts` - React Query hooks that
-  own all server state (list habits, create habit, check in, undo check-in).
-  No manual `useState` + `useEffect` fetching anywhere - React Query handles
-  caching, refetching, and loading/error states.
+### Key Files
 
-## Setup
+- **lib/supabase.ts** — Initializes the Supabase client and manages authentication sessions.
+- **lib/api.ts** — Typed API wrapper that automatically attaches the authenticated user's JWT to every request.
+- **hooks/useAuth.ts** — Handles authentication, session management, display name updates, email changes, password updates, and OAuth providers.
+- **hooks/useHabits.ts** — Retrieves and manages habit data with React Query.
+- **hooks/useHabitHistory.ts** — Manages habit check-in history.
+- **hooks/useDashboardCharts.ts** — Supplies analytics data for dashboard charts and heatmaps.
 
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
+---
 
-2. **Configure environment**
-   ```bash
-   cp .env.example .env
-   ```
-   - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` - same Supabase project
-     as the backend (Project Settings -> API)
-   - `VITE_API_BASE_URL` - defaults to `http://127.0.0.1:8000/api`, matching
-     the Django dev server
+## Getting Started
 
-3. **Make sure the Django backend is running** (separate terminal, separate
-   repo) - this frontend does nothing useful without it:
-   ```bash
-   python manage.py runserver
-   ```
+### 1. Install dependencies
 
-4. **Run the frontend**
-   ```bash
-   npm run dev
-   ```
-   Opens at `http://localhost:5173`.
+```bash
+npm install
+```
 
-# Tsk
+### 2. Configure environment variables
+
+Copy the example environment file.
+
+```bash
+cp .env.example .env
+```
+
+Then configure:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_API_BASE_URL=
+```
+
+---
+
+### 3. Start the backend
+
+Run the Django backend in a separate terminal.
+
+```bash
+python manage.py runserver
+```
+
+---
+
+### 4. Start the frontend
+
+```bash
+npm run dev
+```
+
+The application will be available at:
+
+```
+http://localhost:5173
+```
+
+---
+
+## Authentication Flow
+
+1. The user signs in using Supabase Authentication.
+2. Supabase returns a JWT access token.
+3. Every API request automatically includes the JWT in the Authorization header.
+4. Django validates the token before processing the request.
+5. PostgreSQL Row Level Security ensures users can only access their own data.
+
+---
+
+
+## Roadmap
+
+- Habit reminders
+- Push notifications
+- Mobile application
+- Calendar view
+- Data export
+- Progressive Web App (PWA)
+- Habit sharing and accountability features
+
+---
+
+## License
+
+This project is licensed under the MIT License.

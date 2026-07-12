@@ -7,23 +7,24 @@ Every view here:
      policies do the authorization work - a view never has to remember to
      filter WHERE user_id = ... by hand, because the database refuses to
      return/accept rows that don't belong to the caller.
+
+This is the full, consolidated file — replace habits/views.py with this
+entirely rather than patching pieces in, to avoid losing classes again.
 """
 
 from datetime import datetime, date as date_cls
 
-from .consistency import calculate_consistency_score
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .services import calculate_streaks
-from .supabase_client import get_supabase_client_for_request
-
 
 from .serializers import (
     HabitCreateSerializer,
     CheckInCreateSerializer,
 )
 from .services import calculate_streaks, build_heatmap
+from .consistency import calculate_consistency_score
+from .dashboard_charts import build_aggregate_heatmap, build_weekly_progress
 from .supabase_client import get_supabase_client_for_request
 
 
@@ -43,26 +44,29 @@ class HabitListCreateView(APIView):
             .execute()
         )
         habits = habits_res.data or []
-
-        # Pull all check-ins for these habits in one query, then group
-        # in Python - avoids N+1 queries against Supabase per habit.
         habit_ids = [h["id"] for h in habits]
+
         check_ins_by_habit: dict[str, list[date_cls]] = {hid: [] for hid in habit_ids}
+        today_check_in_id_by_habit: dict[str, str | None] = {hid: None for hid in habit_ids}
+        today = date_cls.today()
 
         if habit_ids:
             check_ins_res = (
                 supabase.table("check_ins")
-                .select("habit_id, completed_at")
+                .select("id, habit_id, completed_at")
                 .in_("habit_id", habit_ids)
                 .execute()
             )
             for row in check_ins_res.data or []:
                 d = datetime.strptime(row["completed_at"], "%Y-%m-%d").date()
                 check_ins_by_habit.setdefault(row["habit_id"], []).append(d)
+                if d == today:
+                    today_check_in_id_by_habit[row["habit_id"]] = row["id"]
 
         enriched = []
         for h in habits:
-            streaks = calculate_streaks(check_ins_by_habit.get(h["id"], []))
+            dates = check_ins_by_habit.get(h["id"], [])
+            streaks = calculate_streaks(dates)
             enriched.append(
                 {
                     "id": h["id"],
@@ -70,8 +74,11 @@ class HabitListCreateView(APIView):
                     "description": h.get("description"),
                     "color": h["color"],
                     "created_at": h["created_at"],
+                    "reminder_time": h.get("reminder_time"),
                     "current_streak": streaks["current_streak"],
                     "longest_streak": streaks["longest_streak"],
+                    "checked_in_today": today_check_in_id_by_habit.get(h["id"]) is not None,
+                    "today_check_in_id": today_check_in_id_by_habit.get(h["id"]),
                 }
             )
 
@@ -89,6 +96,9 @@ class HabitListCreateView(APIView):
             "color": serializer.validated_data["color"],
             "user_id": request.user.id,
         }
+        reminder_time = serializer.validated_data.get("reminder_time")
+        if reminder_time is not None:
+            payload["reminder_time"] = reminder_time.isoformat()
 
         result = supabase.table("habits").insert(payload).execute()
 
@@ -106,8 +116,11 @@ class HabitListCreateView(APIView):
                 "description": created.get("description"),
                 "color": created["color"],
                 "created_at": created["created_at"],
+                "reminder_time": created.get("reminder_time"),
                 "current_streak": 0,
                 "longest_streak": 0,
+                "checked_in_today": False,
+                "today_check_in_id": None,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -176,9 +189,6 @@ class CheckInCreateView(APIView):
         )
 
         if not result.data:
-            # Most likely cause: the unique (habit_id, completed_at)
-            # constraint rejected a duplicate check-in for the same day,
-            # or RLS blocked it because the habit doesn't belong to this user.
             return Response(
                 {"detail": "Could not log check-in. It may already exist for this date."},
                 status=status.HTTP_409_CONFLICT,
@@ -210,13 +220,10 @@ class CheckInDeleteView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class ConsistencyScoreView(APIView):
     """
     GET /api/consistency-score -> composite 0-100 score for the current user
-
-    Fetches all habits + this month's check-ins in two queries (same
-    no-N+1 pattern as HabitListCreateView), computes streaks per habit,
-    then hands off to calculate_consistency_score for the scoring math.
     """
 
     def get(self, request):
@@ -228,9 +235,7 @@ class ConsistencyScoreView(APIView):
         habits = [
             {
                 "id": h["id"],
-                "created_at": datetime.strptime(
-                    h["created_at"][:10], "%Y-%m-%d"
-                ).date(),
+                "created_at": datetime.strptime(h["created_at"][:10], "%Y-%m-%d").date(),
             }
             for h in habits_raw
         ]
@@ -264,8 +269,6 @@ class ConsistencyScoreView(APIView):
             d = datetime.strptime(row["completed_at"], "%Y-%m-%d").date()
             check_ins_by_habit.setdefault(row["habit_id"], []).append(d)
 
-        # Streaks need full history, not just this month's check-ins —
-        # reuse the same all-time query pattern as HabitListCreateView.
         all_check_ins_res = (
             supabase.table("check_ins")
             .select("habit_id, completed_at")
@@ -285,3 +288,37 @@ class ConsistencyScoreView(APIView):
         result = calculate_consistency_score(habits, check_ins_by_habit, today)
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class DashboardChartsView(APIView):
+    """
+    GET /api/dashboard/charts -> weekly bar chart + calendar heatmap data,
+    aggregated across all of the user's habits.
+    """
+
+    def get(self, request):
+        supabase = get_supabase_client_for_request(request)
+
+        habits_res = supabase.table("habits").select("id").execute()
+        habit_ids = [h["id"] for h in (habits_res.data or [])]
+        total_habits = len(habit_ids)
+
+        all_dates = []
+        if habit_ids:
+            check_ins_res = (
+                supabase.table("check_ins")
+                .select("completed_at")
+                .in_("habit_id", habit_ids)
+                .execute()
+            )
+            all_dates = [
+                datetime.strptime(row["completed_at"], "%Y-%m-%d").date()
+                for row in (check_ins_res.data or [])
+            ]
+
+        return Response(
+            {
+                "heatmap": build_aggregate_heatmap(all_dates),
+                "weekly": build_weekly_progress(all_dates, total_habits),
+            }
+        )

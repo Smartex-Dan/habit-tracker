@@ -3,36 +3,57 @@ import { useAuth } from "../hooks/useAuth";
 import { useHabits } from "../hooks/useHabits";
 import { useConsistencyScore } from "../hooks/useConsistencyScore";
 import { Navbar } from "../components/Navbar";
-import { HabitCard } from "../components/HabitCard";
 import { CreateHabitForm } from "../components/CreateHabitForm";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import ConsistencyScoreCard from "../components/ConsistencyScoreCard";
+import DashboardHero from "../components/DashboardHero";
+import QuickStats from "../components/QuickStats";
+import TodaysHabits from "../components/TodaysHabits";
+import WeeklyProgressChart from "../components/WeeklyProgressChart";
+import DashboardHeatmap from "../components/DashboardHeatmap";
+import { useDashboardCharts } from "../hooks/useDashboardCharts";
+import { getDashboardStats } from "../lib/dashboardStats";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const { data: habits, isLoading, error } = useHabits();
   const { data: score } = useConsistencyScore();
+  const { data: charts } = useDashboardCharts();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const firstName = user?.email?.split("@")[0];
+ const firstName =
+  user?.user_metadata?.display_name?.trim() ||
+  user?.email?.split("@")[0];
+
+  const stats = getDashboardStats(habits ?? []);
 
   return (
     <div className="min-h-screen" style={{ background: "var(--color-background)" }}>
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1
-              className="text-2xl font-semibold"
-              style={{ fontFamily: "var(--font-headline)", color: "var(--color-text)" }}
-            >
-              Welcome back{firstName ? `, ${firstName}` : ""}
-            </h1>
-            <p className="text-sm opacity-60" style={{ color: "var(--color-text)" }}>
-              {habits?.length ?? 0} habit{habits?.length === 1 ? "" : "s"} tracked
-            </p>
-          </div>
+        <DashboardHero
+          name={firstName}
+          bestCurrentStreak={stats.bestCurrentStreak}
+          todayCompleted={stats.todayCompleted}
+          todayTotal={stats.todayTotal}
+        />
+
+        <QuickStats
+          bestCurrentStreak={stats.bestCurrentStreak}
+          longestStreakEver={stats.longestStreakEver}
+          todayCompleted={stats.todayCompleted}
+          todayTotal={stats.todayTotal}
+          consistencyScore={score?.score}
+        />
+
+        <div className="flex items-center justify-between mb-6">
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: "var(--font-headline, 'Fraunces', serif)", color: "var(--color-text)" }}
+          >
+            Your Habits
+          </h2>
 
           {!showCreateForm && (
             <button
@@ -46,7 +67,7 @@ export function DashboardPage() {
         </div>
 
         {score && (
-          <div className="mb-8">
+          <div className="mb-6">
             <ConsistencyScoreCard result={score} />
           </div>
         )}
@@ -85,11 +106,12 @@ export function DashboardPage() {
           </div>
         )}
 
-        {habits && habits.length > 0 && (
-          <div className="space-y-3">
-            {habits.map((h) => (
-              <HabitCard key={h.id} habit={h} />
-            ))}
+        {habits && habits.length > 0 && <TodaysHabits habits={habits} />}
+
+        {charts && (
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <WeeklyProgressChart data={charts.weekly} />
+            <DashboardHeatmap entries={charts.heatmap} />
           </div>
         )}
       </div>
