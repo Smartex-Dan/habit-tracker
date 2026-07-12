@@ -188,7 +188,41 @@ class CheckInCreateView(APIView):
             .execute()
         )
 
-        if not result.data:
+   class CheckInCreateView(APIView):
+    def post(self, request):
+        try:
+            serializer = CheckInCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+ 
+            supabase = get_supabase_client_for_request(request)
+ 
+            habit_id = str(serializer.validated_data["habit_id"])
+            check_date = serializer.validated_data["date"].isoformat()
+ 
+            result = (
+                supabase.table("check_ins")
+                .insert({"habit_id": habit_id, "completed_at": check_date})
+                .execute()
+            )
+ 
+            if not result.data:
+                return Response(
+                    {"detail": "Could not log check-in. It may already exist for this date."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+ 
+            return Response(result.data[0], status=status.HTTP_201_CREATED)
+ 
+        except Exception as e:
+            return Response(
+                {
+                    "detail": "DEBUG ERROR — remove this except block once fixed",
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "traceback": traceback.format_exc(),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )     if not result.data:
             return Response(
                 {"detail": "Could not log check-in. It may already exist for this date."},
                 status=status.HTTP_409_CONFLICT,
