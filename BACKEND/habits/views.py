@@ -10,8 +10,13 @@ Every view here:
 
 This is the full, consolidated file — replace habits/views.py with this
 entirely rather than patching pieces in, to avoid losing classes again.
+
+NOTE: CheckInCreateView below is temporarily wrapped in a try/except for
+debugging the 500 error — revert to the plain version once diagnosed
+(see the comment on that class).
 """
 
+import traceback
 from datetime import datetime, date as date_cls
 
 from rest_framework import status
@@ -171,48 +176,37 @@ class HabitHistoryView(APIView):
 class CheckInCreateView(APIView):
     """
     POST /api/check-ins -> log a completion for a habit on a given date
+
+    TEMPORARY DEBUG VERSION — wrapped in try/except to surface the real
+    exception in the API response instead of a bare 500. Revert to a
+    plain (no try/except) version once the bug is found — don't leave
+    raw exception text exposed to the client long-term.
     """
 
-    def post(self, request):
-        serializer = CheckInCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        supabase = get_supabase_client_for_request(request)
-
-        habit_id = str(serializer.validated_data["habit_id"])
-        check_date = serializer.validated_data["date"].isoformat()
-
-        result = (
-            supabase.table("check_ins")
-            .insert({"habit_id": habit_id, "completed_at": check_date})
-            .execute()
-        )
-
-   class CheckInCreateView(APIView):
     def post(self, request):
         try:
             serializer = CheckInCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
- 
+
             supabase = get_supabase_client_for_request(request)
- 
+
             habit_id = str(serializer.validated_data["habit_id"])
             check_date = serializer.validated_data["date"].isoformat()
- 
+
             result = (
                 supabase.table("check_ins")
                 .insert({"habit_id": habit_id, "completed_at": check_date})
                 .execute()
             )
- 
+
             if not result.data:
                 return Response(
                     {"detail": "Could not log check-in. It may already exist for this date."},
                     status=status.HTTP_409_CONFLICT,
                 )
- 
+
             return Response(result.data[0], status=status.HTTP_201_CREATED)
- 
+
         except Exception as e:
             return Response(
                 {
@@ -222,13 +216,7 @@ class CheckInCreateView(APIView):
                     "traceback": traceback.format_exc(),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )     if not result.data:
-            return Response(
-                {"detail": "Could not log check-in. It may already exist for this date."},
-                status=status.HTTP_409_CONFLICT,
             )
-
-        return Response(result.data[0], status=status.HTTP_201_CREATED)
 
 
 class CheckInDeleteView(APIView):
