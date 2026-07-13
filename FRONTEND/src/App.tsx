@@ -11,6 +11,8 @@ import { DailyGoalsPage } from "./pages/DailyGoalsPage";
 import { TodosPage } from "./pages/TodosPage";
 import { LongTermGoalsPage } from "./pages/LongTermGoalsPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { CheckEmailPage } from "./pages/CheckEmailPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { TermsPage } from "./pages/TermsPage";
 
@@ -47,6 +49,8 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/check-email" element={<CheckEmailPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsPage />} />
 

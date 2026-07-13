@@ -65,7 +65,7 @@ export function LoginPage() {
       setError(friendlyAuthError(error.message));
       return;
     }
-    navigate("/dashboard");
+    navigate("/check-email");
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -91,7 +91,7 @@ export function LoginPage() {
       setError(friendlyAuthError(error.message));
       return;
     }
-    navigate("/dashboard");
+    navigate("/check-email");
   }
 
   async function handleOAuth(provider: "google" | "github" | "x") {

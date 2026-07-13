@@ -29,7 +29,17 @@ export function useAuth() {
   }, []);
 
   const signUp = (email: string, password: string) =>
-    supabase.auth.signUp({ email, password });
+  supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      // Supabase processes the confirmation link server-side (marks the
+      // user verified, establishes a session), THEN redirects the browser
+      // here — this is where the password re-entry + checkmark flow lives.
+      emailRedirectTo: `${window.location.origin}/verify-email`,
+    },
+  });
+ 
 
   const signIn = (email: string, password: string) =>
     supabase.auth.signInWithPassword({ email, password });
