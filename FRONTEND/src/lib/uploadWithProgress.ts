@@ -39,15 +39,7 @@ export function uploadWithProgress<T = unknown>({
         let detail = `Upload failed with status ${xhr.status}`;
         try {
           const parsed = JSON.parse(xhr.response);
-          // TEMPORARY: surface the debug backend's error_type/error_message
-          // directly in the banner, so the real cause shows up without
-          // needing to open DevTools. Remove this branch once the debug
-          // wrapper comes off the backend view.
-          if (parsed?.error_type || parsed?.error_message) {
-            detail = `[${parsed.error_type}] ${parsed.error_message}`;
-          } else {
-            detail = parsed?.detail || detail;
-          }
+          detail = parsed?.detail || detail;
         } catch {
           // response wasn't JSON; keep the generic message
         }

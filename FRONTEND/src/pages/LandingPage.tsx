@@ -200,6 +200,11 @@ function Features() {
 /* App Screenshots                                                      */
 /* ------------------------------------------------------------------ */
 function Screenshots() {
+  const shots = [
+    { src: "/home.png", alt: "Habit Tracker landing page" },
+    { src: "/dash.png", alt: "Habit Tracker dashboard" },
+  ];
+ 
   return (
     <section id="screenshots" className="px-6 md:px-12 py-24" style={{ backgroundColor: tokens.surface }}>
       <FadeInSection className="max-w-5xl mx-auto text-center">
@@ -213,15 +218,17 @@ function Screenshots() {
           Your dashboard, streaks, and heatmap — all in one place.
         </p>
         <div className="grid md:grid-cols-2 gap-6">
-          {[1, 2].map((n) => (
+          {shots.map((shot) => (
             <div
-              key={n}
-              className="aspect-video rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1"
-              style={{ backgroundColor: tokens.background, border: `1px solid ${tokens.textSecondary}30` }}
+              key={shot.src}
+              className="aspect-video rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+              style={{ border: `1px solid ${tokens.textSecondary}30` }}
             >
-              <span style={{ color: tokens.textSecondary, fontFamily: "'Sora', sans-serif" }}>
-                Screenshot {n}
-              </span>
+              <img
+                src={shot.src}
+                alt={shot.alt}
+                className="w-full h-full object-cover"
+              />
             </div>
           ))}
         </div>
@@ -229,7 +236,7 @@ function Screenshots() {
     </section>
   );
 }
-
+ 
 /* ------------------------------------------------------------------ */
 /* Testimonials                                                         */
 /* ------------------------------------------------------------------ */
